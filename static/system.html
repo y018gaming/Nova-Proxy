@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Games - Nova Proxy</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/games.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="/images/logo.png" alt="Nova Proxy Logo">
+                <h1>Nova Proxy</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/apps">Apps</a></li>
+                    <li class="active"><a href="/games">Games</a></li>
+                    <li><a href="/settings">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero small">
+            <div class="container">
+                <h2 id="system-name">System Games</h2>
+                <p id="system-description">Loading system information...</p>
+                <a href="/games" class="btn back-btn">Back to Systems</a>
+            </div>
+        </section>
+
+        <section class="games-container">
+            <div class="container">
+                <h3>Available Games</h3>
+                <div class="games-grid" id="games-grid">
+                    <div class="loading">Loading games...</div>
+                </div>
+                
+                <div class="no-games" id="no-games" style="display: none;">
+                    <h4>No games found for this system</h4>
+                    <p>To add games:</p>
+                    <ol>
+                        <li>Prepare your ROM files in the supported formats for this system</li>
+                        <li>Upload them to the system's folder in <code id="system-folder"></code></li>
+                        <li>Refresh this page to see your added games</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Nova Proxy - Forked from Interstellar</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get system ID from URL
+            const pathParts = window.location.pathname.split('/');
+            const systemId = pathParts[pathParts.length - 1];
+            
+            const systemName = document.getElementById('system-name');
+            const systemDescription = document.getElementById('system-description');
+            const gamesGrid = document.getElementById('games-grid');
+            const noGames = document.getElementById('no-games');
+            const systemFolder = document.getElementById('system-folder');
+            
+            try {
+                const response = await fetch(`/games/api/games/${systemId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update page title and description
+                    document.title = `${data.system.name} Games - Nova Proxy`;
+                    systemName.textContent = data.system.name;
+                    systemDescription.textContent = `Browse and play ${data.system.name} games`;
+                    
+                    // Show system folder path
+                    systemFolder.textContent = `/static/games/roms/${systemId}`;
+                    
+                    if (data.games.length > 0) {
+                        // Display games
+                        gamesGrid.innerHTML = '';
+                        
+                        data.games.forEach(game => {
+                            const gameCard = document.createElement('div');
+                            gameCard.className = 'game-card';
+                            
+                            gameCard.innerHTML = `
+                                <div class="game-icon ${systemId}"></div>
+                                <h4>${game.title}</h4>
+                                <p class="game-file">${game.file}</p>
+                                <a href="/games/play/${systemId}/${game.file}" class="btn play-btn">Play Game</a>
+                            `;
+                            
+                            gamesGrid.appendChild(gameCard);
+                        });
+                    } else {
+                        // No games found
+                        gamesGrid.style.display = 'none';
+                        noGames.style.display = 'block';
+                    }
+                } else {
+                    // Error with API response
+                    systemName.textContent = 'System Not Found';
+                    systemDescription.textContent = 'The requested gaming system could not be found';
+                    gamesGrid.innerHTML = '<div class="error">System not found</div>';
+                }
+            } catch (err) {
+                console.error('Error fetching games:', err);
+                systemName.textContent = 'Error';
+                systemDescription.textContent = 'Failed to load system information';
+                gamesGrid.innerHTML = '<div class="error">Failed to load games</div>';
+            }
+        });
+    </script>
+</body>
+</html>
