@@ -1,0 +1,181 @@
+/* Emulator Specific CSS */
+
+.game-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.game-info h2 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.game-info p {
+    margin: 0.25rem 0 0;
+    opacity: 0.8;
+}
+
+.game-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.game-controls .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Emulator Screen */
+.emulator-container {
+    background-color: #121212;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.emulator-screen {
+    position: relative;
+    aspect-ratio: 4/3;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#emulator-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.loading-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: #9147ff;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-screen p {
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.loading-screen .error {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    padding: 1rem;
+    border-radius: 8px;
+    max-width: 80%;
+    text-align: center;
+}
+
+/* Controls Info */
+.controls-info {
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.controls-info h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.control-set {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.5rem 1.5rem;
+}
+
+.control-set p {
+    margin: 0.5rem 0;
+}
+
+/* Fullscreen Styles */
+.emulator-container:fullscreen {
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+}
+
+.emulator-container:fullscreen .emulator-screen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.emulator-container:fullscreen .controls-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 1rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 20;
+}
+
+.emulator-container:fullscreen:hover .controls-info {
+    transform: translateY(0);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .game-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .game-controls {
+        margin-top: 1rem;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .control-set {
+        grid-template-columns: 1fr;
+    }
+}
