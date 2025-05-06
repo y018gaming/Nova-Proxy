@@ -1,46 +1,124 @@
 {
   "name": "nova-proxy",
   "version": "1.0.0",
-  "description": "A web proxy forked from Interstellar with GitHub Codespaces compatibility and game emulation support",
+  "description": "An enhanced web proxy based on Interstellar with game emulation support",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "dev:codespace": "NODE_ENV=codespace nodemon index.js",
-    "build": "node build.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yourusername/nova-proxy.git"
+    "dev": "nodemon index.js"
   },
   "keywords": [
     "proxy",
     "web-proxy",
-    "games",
-    "emulation",
-    "codespaces",
+    "game-emulation",
     "interstellar"
   ],
   "author": "Oscar",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "dependencies": {
-    "@tomphttp/bare-server-node": "^1.2.2",
-    "chalk": "^4.1.2",
-    "dotenv": "^16.0.3",
+    "bare-server-node": "^1.2.6",
     "express": "^4.18.2",
-    "compression": "^1.7.4",
+    "express-basic-auth": "^1.2.1",
+    "http-proxy-middleware": "^2.0.6",
+    "nodemon": "^3.0.1",
     "serve-static": "^1.15.0",
-    "ultraviolet": "github:titaniumnetwork-dev/ultraviolet",
-    "ws": "^8.13.0",
-    "jsnes": "^1.2.1",
-    "javascript-gameboy": "^1.0.2",
-    "snes9x-js": "^1.0.0"
-  },
-  "devDependencies": {
-    "eslint": "^8.36.0",
-    "nodemon": "^2.0.22"
+    "socket.io": "^4.7.2"
   },
   "engines": {
     "node": ">=16.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/nova-proxy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/username/nova-proxy/issues"
+  },
+  "homepage": "https://github.com/username/nova-proxy#readme"
 }
+
+// File: index.js
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const fs = require('fs');
+const { createBareServer } = require('bare-server-node');
+const serveStatic = require('serve-static');
+const basicAuth = require('express-basic-auth');
+const socketIo = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const port = process.env.PORT || 8080;
+
+// Create a Bare server for proxying requests
+const bareServer = createBareServer('/bare/');
+
+// Configure security for Codespaces
+const isCodespace = !!process.env.CODESPACE_NAME;
+const useAuth = process.env.USE_AUTH === 'true';
+
+// Basic authentication for added security if enabled
+if (useAuth) {
+  app.use(basicAuth({
+    users: { 'admin': process.env.AUTH_PASSWORD || 'password123' },
+    challenge: true,
+    realm: 'Nova Proxy'
+  }));
+}
+
+// Set up Socket.IO for real-time communication (useful for multiplayer games)
+const io = socketIo(server);
+io.on('connection', (socket) => {
+  console.log('A user connected');
+  
+  socket.on('game-state', (data) => {
+    // Broadcast game state to other players
+    socket.broadcast.emit('game-update', data);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
+});
+
+// Handle Bare Server requests
+server.on('request', (req, res) => {
+  if (bareServer.shouldRoute(req)) {
+    bareServer.routeRequest(req, res);
+  } else {
+    app(req, res);
+  }
+});
+
+server.on('upgrade', (req, socket, head) => {
+  if (bareServer.shouldRoute(req)) {
+    bareServer.routeUpgrade(req, socket, head);
+  } else {
+    socket.end();
+  }
+});
+
+// Serve static files from the public directory
+app.use(serveStatic(path.join(__dirname, 'public')));
+
+// API routes
+app.use('/api', require('./routes/api'));
+
+// Game emulation routes
+app.use('/games', require('./routes/games'));
+
+// Fallback to index for SPA behavior
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start the server
+server.listen(port, () => {
+  const address = isCodespace 
+    ? `https://${process.env.CODESPACE_NAME}-${port}.preview.app.github.dev` 
+    : `http://localhost:${port}`;
+    
+  console.log(`Nova Proxy is running at ${address}`);
+  console.log(`Bare server is available at ${address}/bare/`);
+});
