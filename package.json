@@ -1,0 +1,46 @@
+{
+  "name": "nova-proxy",
+  "version": "1.0.0",
+  "description": "A web proxy forked from Interstellar with GitHub Codespaces compatibility and game emulation support",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "dev:codespace": "NODE_ENV=codespace nodemon index.js",
+    "build": "node build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/nova-proxy.git"
+  },
+  "keywords": [
+    "proxy",
+    "web-proxy",
+    "games",
+    "emulation",
+    "codespaces",
+    "interstellar"
+  ],
+  "author": "Oscar",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@tomphttp/bare-server-node": "^1.2.2",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "compression": "^1.7.4",
+    "serve-static": "^1.15.0",
+    "ultraviolet": "github:titaniumnetwork-dev/ultraviolet",
+    "ws": "^8.13.0",
+    "jsnes": "^1.2.1",
+    "javascript-gameboy": "^1.0.2",
+    "snes9x-js": "^1.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.36.0",
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
