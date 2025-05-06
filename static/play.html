@@ -40,4 +40,265 @@
                     <p id="game-system">Loading system...</p>
                 </div>
                 <div class="game-controls">
-                    <button id="fullscreen-btn
+                    <button id="fullscreen-btn" class="btn">Fullscreen</button>
+                    <button id="reset-btn" class="btn">Reset</button>
+                    <button id="save-btn" class="btn">Save State</button>
+                    <button id="load-btn" class="btn">Load State</button>
+                    <a id="back-btn" href="" class="btn">Back to Games</a>
+                </div>
+            </div>
+
+            <div class="emulator-container">
+                <div id="loading-screen" class="loading-screen">
+                    <div class="spinner"></div>
+                    <p>Loading game...</p>
+                </div>
+                <div id="emulator-screen" class="emulator-screen">
+                    <canvas id="emulator-canvas"></canvas>
+                </div>
+                <div class="controls-info">
+                    <h3>Controls</h3>
+                    <div id="controls-nes" class="control-set">
+                        <p><strong>D-Pad:</strong> Arrow Keys</p>
+                        <p><strong>A Button:</strong> X</p>
+                        <p><strong>B Button:</strong> Z</p>
+                        <p><strong>Start:</strong> Enter</p>
+                        <p><strong>Select:</strong> Shift</p>
+                    </div>
+                    <div id="controls-gb" class="control-set" style="display: none;">
+                        <p><strong>D-Pad:</strong> Arrow Keys</p>
+                        <p><strong>A Button:</strong> X</p>
+                        <p><strong>B Button:</strong> Z</p>
+                        <p><strong>Start:</strong> Enter</p>
+                        <p><strong>Select:</strong> Shift</p>
+                    </div>
+                    <div id="controls-snes" class="control-set" style="display: none;">
+                        <p><strong>D-Pad:</strong> Arrow Keys</p>
+                        <p><strong>A Button:</strong> X</p>
+                        <p><strong>B Button:</strong> Z</p>
+                        <p><strong>X Button:</strong> S</p>
+                        <p><strong>Y Button:</strong> A</p>
+                        <p><strong>L Button:</strong> Q</p>
+                        <p><strong>R Button:</strong> W</p>
+                        <p><strong>Start:</strong> Enter</p>
+                        <p><strong>Select:</strong> Shift</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Nova Proxy - Forked from Interstellar</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get system and game ID from URL
+            const pathParts = window.location.pathname.split('/');
+            const systemId = pathParts[pathParts.length - 2];
+            const gameFile = pathParts[pathParts.length - 1];
+            
+            // Elements
+            const gameTitle = document.getElementById('game-title');
+            const gameSystem = document.getElementById('game-system');
+            const backBtn = document.getElementById('back-btn');
+            const loadingScreen = document.getElementById('loading-screen');
+            const emulatorCanvas = document.getElementById('emulator-canvas');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const loadBtn = document.getElementById('load-btn');
+            
+            // Control sets
+            const controlSets = {
+                'nes': document.getElementById('controls-nes'),
+                'gb': document.getElementById('controls-gb'),
+                'snes': document.getElementById('controls-snes')
+            };
+            
+            // Update back button
+            backBtn.href = `/games/system/${systemId}`;
+            
+            // Show appropriate controls
+            Object.keys(controlSets).forEach(system => {
+                controlSets[system].style.display = system === systemId ? 'block' : 'none';
+            });
+            
+            try {
+                // Fetch game details
+                const response = await fetch(`/games/api/game/${systemId}/${gameFile}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update page info
+                    document.title = `${data.game.title} - Nova Proxy`;
+                    gameTitle.textContent = data.game.title;
+                    gameSystem.textContent = data.game.system.name;
+                    
+                    // Initialize emulator based on system
+                    const romPath = data.game.path;
+                    
+                    // Load ROM data
+                    const romResponse = await fetch(romPath);
+                    const romBuffer = await romResponse.arrayBuffer();
+                    
+                    // Hide loading screen
+                    loadingScreen.style.display = 'none';
+                    
+                    // Initialize emulator based on system type
+                    switch(systemId) {
+                        case 'nes':
+                            initNesEmulator(romBuffer);
+                            break;
+                        case 'gb':
+                            initGbEmulator(romBuffer);
+                            break;
+                        case 'snes':
+                            initSnesEmulator(romBuffer);
+                            break;
+                        default:
+                            throw new Error('Unsupported system');
+                    }
+                    
+                } else {
+                    // Error loading game
+                    gameTitle.textContent = 'Game Not Found';
+                    gameSystem.textContent = 'Error loading game';
+                    loadingScreen.innerHTML = '<div class="error">Game could not be loaded</div>';
+                }
+            } catch (err) {
+                console.error('Error loading game:', err);
+                gameTitle.textContent = 'Error';
+                gameSystem.textContent = 'Failed to load game';
+                loadingScreen.innerHTML = '<div class="error">Failed to load game: ' + err.message + '</div>';
+            }
+            
+            // Emulator initialization functions
+            function initNesEmulator(romBuffer) {
+                // Initialize JSNES
+                window.nesEmulator = new JSNES({
+                    canvas: emulatorCanvas,
+                    sampleRate: 44100
+                });
+                
+                // Load ROM
+                const romData = new Uint8Array(romBuffer);
+                window.nesEmulator.loadROM(romData);
+                
+                // Setup button actions
+                resetBtn.addEventListener('click', () => {
+                    window.nesEmulator.reset();
+                });
+                
+                saveBtn.addEventListener('click', () => {
+                    const state = window.nesEmulator.toJSON();
+                    localStorage.setItem(`save_${systemId}_${gameFile}`, JSON.stringify(state));
+                    alert('Game state saved!');
+                });
+                
+                loadBtn.addEventListener('click', () => {
+                    const state = localStorage.getItem(`save_${systemId}_${gameFile}`);
+                    if (state) {
+                        window.nesEmulator.fromJSON(JSON.parse(state));
+                        alert('Game state loaded!');
+                    } else {
+                        alert('No saved state found!');
+                    }
+                });
+            }
+            
+            function initGbEmulator(romBuffer) {
+                // Initialize GameBoy emulator
+                window.gbEmulator = new GameBoy(emulatorCanvas);
+                
+                // Load ROM
+                const romData = new Uint8Array(romBuffer);
+                window.gbEmulator.loadROM(romData);
+                window.gbEmulator.start();
+                
+                // Setup button actions
+                resetBtn.addEventListener('click', () => {
+                    window.gbEmulator.reset();
+                });
+                
+                saveBtn.addEventListener('click', () => {
+                    const state = window.gbEmulator.saveState();
+                    localStorage.setItem(`save_${systemId}_${gameFile}`, state);
+                    alert('Game state saved!');
+                });
+                
+                loadBtn.addEventListener('click', () => {
+                    const state = localStorage.getItem(`save_${systemId}_${gameFile}`);
+                    if (state) {
+                        window.gbEmulator.loadState(state);
+                        alert('Game state loaded!');
+                    } else {
+                        alert('No saved state found!');
+                    }
+                });
+            }
+            
+            function initSnesEmulator(romBuffer) {
+                // Initialize SNES emulator
+                window.snesEmulator = new Snes9x(emulatorCanvas);
+                
+                // Load ROM
+                const romData = new Uint8Array(romBuffer);
+                window.snesEmulator.loadROM(romData);
+                window.snesEmulator.start();
+                
+                // Setup button actions
+                resetBtn.addEventListener('click', () => {
+                    window.snesEmulator.reset();
+                });
+                
+                saveBtn.addEventListener('click', () => {
+                    const state = window.snesEmulator.saveState();
+                    localStorage.setItem(`save_${systemId}_${gameFile}`, state);
+                    alert('Game state saved!');
+                });
+                
+                loadBtn.addEventListener('click', () => {
+                    const state = localStorage.getItem(`save_${systemId}_${gameFile}`);
+                    if (state) {
+                        window.snesEmulator.loadState(state);
+                        alert('Game state loaded!');
+                    } else {
+                        alert('No saved state found!');
+                    }
+                });
+            }
+            
+            // Fullscreen functionality
+            fullscreenBtn.addEventListener('click', () => {
+                const emulatorContainer = document.querySelector('.emulator-container');
+                
+                if (!document.fullscreenElement) {
+                    if (emulatorContainer.requestFullscreen) {
+                        emulatorContainer.requestFullscreen();
+                    } else if (emulatorContainer.mozRequestFullScreen) {
+                        emulatorContainer.mozRequestFullScreen();
+                    } else if (emulatorContainer.webkitRequestFullscreen) {
+                        emulatorContainer.webkitRequestFullscreen();
+                    } else if (emulatorContainer.msRequestFullscreen) {
+                        emulatorContainer.msRequestFullscreen();
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
