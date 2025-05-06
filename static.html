@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Emulation - Nova Proxy</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/games.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="/images/logo.png" alt="Nova Proxy Logo">
+                <h1>Nova Proxy</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/apps" class="active">Apps</a></li>
+                    <li class="active"><a href="/games">Games</a></li>
+                    <li><a href="/settings">Settings</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h2>Game Emulation Station</h2>
+                <p>Play classic games directly in your browser!</p>
+            </div>
+        </section>
+
+        <section class="systems-container">
+            <div class="container">
+                <h3>Choose a System</h3>
+                <div class="systems-grid" id="systems-grid">
+                    <div class="loading">Loading systems...</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="info-section">
+            <div class="container">
+                <h3>How to Add Games</h3>
+                <p>To add your own games to the emulation library:</p>
+                <ol>
+                    <li>Prepare your ROM files in the supported formats (.nes, .gb, .gbc, .smc, .sfc)</li>
+                    <li>Upload them to the appropriate system folder in <code>/static/games/roms/[system]</code></li>
+                    <li>Refresh this page to see your added games</li>
+                </ol>
+                <div class="note">
+                    <strong>Note:</strong> Only use ROM files that you legally own. Nova Proxy does not distribute any copyrighted game files.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Nova Proxy - Forked from Interstellar</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const systemsGrid = document.getElementById('systems-grid');
+            
+            try {
+                const response = await fetch('/games/api/systems');
+                const data = await response.json();
+                
+                if (data.success && data.systems.length > 0) {
+                    systemsGrid.innerHTML = '';
+                    
+                    data.systems.forEach(system => {
+                        const systemCard = document.createElement('div');
+                        systemCard.className = 'system-card';
+                        
+                        systemCard.innerHTML = `
+                            <div class="system-icon ${system.id}"></div>
+                            <h4>${system.name}</h4>
+                            <a href="/games/system/${system.id}" class="btn">View Games</a>
+                        `;
+                        
+                        systemsGrid.appendChild(systemCard);
+                    });
+                } else {
+                    systemsGrid.innerHTML = '<div class="error">No systems available</div>';
+                }
+            } catch (err) {
+                console.error('Error fetching systems:', err);
+                systemsGrid.innerHTML = '<div class="error">Failed to load systems</div>';
+            }
+        });
+    </script>
+</body>
+</html>
