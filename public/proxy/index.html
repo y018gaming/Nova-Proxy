@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Proxy</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="icon" href="../assets/img/favicon.ico" type="image/x-icon">
+    <meta name="description" content="Access the web freely with Stellar Proxy">
+    <meta name="theme-color" content="#0033cc">
+</head>
+<body class="proxy-page">
+    <header>
+        <div class="logo-container">
+            <img src="../assets/img/logo.png" alt="Stellar Proxy Logo" class="logo">
+            <h1>Stellar Proxy</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../emulators/gba/index.html">GBA Emulator</a></li>
+                <li><a href="../emulators/nes/index.html">NES Emulator</a></li>
+                <li><a href="../emulators/snes/index.html">SNES Emulator</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="proxy-container">
+            <h2>Enter URL to Browse</h2>
+            <form id="uv-form">
+                <input id="uv-address" type="text" placeholder="Search the web freely or enter URL" autocomplete="off">
+                <button id="uv-search" type="submit">Go</button>
+            </form>
+            
+            <div class="proxy-options">
+                <h3>Quick Links</h3>
+                <div class="quick-links">
+                    <button class="quick-link" data-url="https://google.com">Google</button>
+                    <button class="quick-link" data-url="https://youtube.com">YouTube</button>
+                    <button class="quick-link" data-url="https://discord.com">Discord</button>
+                    <button class="quick-link" data-url="https://reddit.com">Reddit</button>
+                </div>
+            </div>
+            
+            <div class="proxy-settings">
+                <h3>Proxy Settings</h3>
+                <div class="settings-options">
+                    <label>
+                        <input type="checkbox" id="stealth-mode"> Stealth Mode
+                    </label>
+                    <label>
+                        <input type="checkbox" id="disable-cookies"> Disable Cookies
+                    </label>
+                    <label>
+                        <input type="checkbox" id="force-dark-mode"> Force Dark Mode
+                    </label>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Stellar Proxy | Based on Interstellar | <a href="https://github.com/yourusername/stellar-proxy" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script src="uv/uv.bundle.js"></script>
+    <script src="uv/uv.config.js"></script>
+    <script src="client.js"></script>
+    <script>
+        // Initialize the service worker for the proxy
+        navigator.serviceWorker.register('./sw.js', {
+            scope: __uv$config.prefix
+        }).catch(err => {
+            console.error('Failed to register service worker:', err);
+        });
+
+        // Form submission handler
+        document.getElementById('uv-form').addEventListener('submit', async event => {
+            event.preventDefault();
+            
+            const address = document.getElementById('uv-address').value;
+            const url = search(address, 'https://www.google.com/search?q=%s');
+            
+            // Apply settings from checkboxes
+            const stealthMode = document.getElementById('stealth-mode').checked;
+            const disableCookies = document.getElementById('disable-cookies').checked;
+            const forceDarkMode = document.getElementById('force-dark-mode').checked;
+            
+            // Store settings in localStorage
+            localStorage.setItem('stellar-proxy-settings', JSON.stringify({
+                stealthMode,
+                disableCookies,
+                forceDarkMode
+            }));
+            
+            // Navigate to the proxied URL
+            window.location.href = __uv$config.prefix + __uv$config.encodeUrl(url);
+        });
+
+        // Quick links functionality
+        document.querySelectorAll('.quick-link').forEach(button => {
+            button.addEventListener('click', () => {
+                const url = button.getAttribute('data-url');
+                document.getElementById('uv-address').value = url;
+                document.getElementById('uv-form').dispatchEvent(new Event('submit'));
+            });
+        });
+
+        // Load saved settings
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                const savedSettings = JSON.parse(localStorage.getItem('stellar-proxy-settings'));
+                if (savedSettings) {
+                    document.getElementById('stealth-mode').checked = savedSettings.stealthMode;
+                    document.getElementById('disable-cookies').checked = savedSettings.disableCookies;
+                    document.getElementById('force-dark-mode').checked = savedSettings.forceDarkMode;
+                }
+            } catch (err) {
+                console.error('Failed to load saved settings:', err);
+            }
+        });
+    </script>
+</body>
+</html>
